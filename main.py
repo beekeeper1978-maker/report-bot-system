@@ -6,7 +6,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 TOKEN = os.getenv("BOT_TOKEN", "8446705525:AAH8evf1zy3QXKj-fJh2cc_KdM-OA2rFaBw")
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(_ _name_ _)
+logger = logging.getLogger(__name__)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ Бот работает! Привет!")
@@ -27,5 +27,4 @@ def main():
     print("Бот запущен!")
     app.run_polling()
 
-if name == "_ _main_ _":
-    main()
+main()
