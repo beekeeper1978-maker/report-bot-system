@@ -1,4 +1,5 @@
-'department': data['answers'][2] if len(data['answers']) > 2 else '',
+'author': data['answers'][1] if len(data['answers']) > 1 else '',
+        'department': data['answers'][2] if len(data['answers']) > 2 else '',
         'key_results': data['answers'][3] if len(data['answers']) > 3 else '',
         'audit': data['answers'][4] if len(data['answers']) > 4 else '',
         'bitrix': data['answers'][5] if len(data['answers']) > 5 else '',
