@@ -5,7 +5,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, Conversati
 from config import BOT_TOKEN, WEBHOOK_URL, QUESTIONS
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(name)
+logger = logging.getLogger(__name__)
 
 Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, PHOTO, FINISH = range(11)
 
@@ -16,96 +16,88 @@ return ConversationHandler.END
 async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data.clear()
 context.user_data["answers"] = []
-context.user_data["photos"] = []
 
-await update.message.reply_text(f"{QUESTIONS[0]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[0]}")
 return Q1
 
 async def handle_q1(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-await update.message.reply_text(f"{QUESTIONS[1]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[1]}")
 return Q2
 
 async def handle_q2(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-await update.message.reply_text(f"{QUESTIONS[2]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[2]}")
 return Q3
 
 async def handle_q3(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-await update.message.reply_text(f"{QUESTIONS[3]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[3]}")
 return Q4
 
 async def handle_q4(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-await update.message.reply_text(f"{QUESTIONS[4]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[4]}")
 return Q5
 
 async def handle_q5(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-await update.message.reply_text(f"{QUESTIONS[5]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[5]}")
 return Q6
 
 async def handle_q6(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-await update.message.reply_text(f"{QUESTIONS[6]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[6]}")
 return Q7
 
 async def handle_q7(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-await update.message.reply_text(f"{QUESTIONS[7]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[7]}")
 return Q8
 
 async def handle_q8(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-await update.message.reply_text(f"{QUESTIONS[8]}\n\n(напиши ответ текстом)")
+await update.message.reply_text(f"{QUESTIONS[8]}")
 return Q9
 
 async def handle_q9(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
 
-await update.message.reply_text(
-"✅ Все вопросы пройдены!\n\n"
-"📸 Теперь можно добавить фото (необязательно)\n"
-"Отправь фото или напиши 'готово' чтобы закончить"
-)
-return PHOTO
-
-async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-if update.message.photo:
-photo = update.message.photo[-1]
-context.user_data["photos"].append(photo.file_id)
-await update.message.reply_text(f"✅ Фото сохранено. Можно добавить еще фото или написать 'готово'")
-return PHOTO
+await update.message.reply_text("Все вопросы пройдены! Напиши 'готово' чтобы отправить отчет")
+return FINISH
 
 async def finish(update: Update, context: ContextTypes.DEFAULT_TYPE):
 user_data = context.user_data
 
 try:
+if len(user_data["answers"]) < 9:
+await update.message.reply_text("Не все вопросы отвечены")
+return ConversationHandler.END
+
 data = {
-"period": user_data["answers"][0] if len(user_data["answers"]) > 0 else "",
-"author": user_data["answers"][1] if len(user_data["answers"]) > 1 else "",
-"department": user_data["answers"][2] if len(user_data["answers"]) > 2 else "",
-"results": user_data["answers"][3] if len(user_data["answers"]) > 3 else "",
-"problems": user_data["answers"][4] if len(user_data["answers"]) > 4 else "",
-"solved": user_data["answers"][5] if len(user_data["answers"]) > 5 else "",
-"help": user_data["answers"][6] if len(user_data["answers"]) > 6 else "",
-"rating": user_data["answers"][7] if len(user_data["answers"]) > 7 else "",
-"plan": user_data["answers"][8] if len(user_data["answers"]) > 8 else "",
-"photos_count": len(user_data["photos"]),
-"chat_id": update.effective_chat.id
+"user_id": str(update.effective_user.id),
+"period": user_data["answers"][0],
+"author": user_data["answers"][1],
+"department": user_data["answers"][2],
+"key_results": user_data["answers"][3],
+"audit_checklist": user_data["answers"][4],
+"bitrix_tasks": user_data["answers"][5],
+"finances": user_data["answers"][6],
+"kpi_attention": user_data["answers"][7],
+"next_week_plan": user_data["answers"][8]
 }
 
 response = requests.post(WEBHOOK_URL, json=data)
 
 if response.status_code == 200:
-await update.message.reply_text("🎉 Отчет отправлен в Google Таблицу!")
+await update.message.reply_text("Отчет отправлен в Google Таблицу!")
 else:
-await update.message.reply_text("⚠️ Данные собраны, но ошибка отправки в Google")
+await update.message.reply_text("Ошибка отправки")
 
 except Exception as e:
-await update.message.reply_text(f"❌ Ошибка: {str(e)}")
+await update.message.reply_text(f"Ошибка: {str(e)}")
 
+context.user_data.clear()
 return ConversationHandler.END
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -131,10 +123,7 @@ Q6: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q6)],
 Q7: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q7)],
 Q8: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q8)],
 Q9: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q9)],
-PHOTO: [
-MessageHandler(filters.PHOTO, handle_photo),
-MessageHandler(filters.TEXT & filters.Regex("^(готово|закончить)$"), finish)
-]
+FINISH: [MessageHandler(filters.TEXT & filters.Regex("^(готово)$"), finish)]
 },
 fallbacks=[CommandHandler("cancel", cancel)]
 )
@@ -148,5 +137,5 @@ app.run_polling()
 except Exception as e:
 print(f"Ошибка: {e}")
 
-if name == "main":
+if __name__ == "__main__":
 main()
