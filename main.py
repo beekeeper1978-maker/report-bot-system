@@ -31,7 +31,6 @@ return ConversationHandler.END
 async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data.clear()
 context.user_data["answers"] = []
-
 await update.message.reply_text(f"{QUESTIONS[0]}")
 return Q1
 
@@ -77,18 +76,15 @@ return Q9
 
 async def handle_q9(update: Update, context: ContextTypes.DEFAULT_TYPE):
 context.user_data["answers"].append(update.message.text)
-
 await update.message.reply_text("Все вопросы пройдены! Напиши 'готово' чтобы отправить отчет")
 return FINISH
 
 async def finish(update: Update, context: ContextTypes.DEFAULT_TYPE):
 user_data = context.user_data
-
 try:
 if len(user_data["answers"]) < 9:
 await update.message.reply_text("Не все вопросы отвечены")
 return ConversationHandler.END
-
 data = {
 "user_id": str(update.effective_user.id),
 "period": user_data["answers"][0],
@@ -101,17 +97,13 @@ data = {
 "kpi_attention": user_data["answers"][7],
 "next_week_plan": user_data["answers"][8]
 }
-
 response = requests.post(WEBHOOK_URL, json=data)
-
 if response.status_code == 200:
 await update.message.reply_text("Отчет отправлен в Google Таблицу!")
 else:
 await update.message.reply_text("Ошибка отправки")
-
 except Exception as e:
 await update.message.reply_text(f"Ошибка: {str(e)}")
-
 context.user_data.clear()
 return ConversationHandler.END
 
@@ -122,10 +114,8 @@ return ConversationHandler.END
 
 def main():
 print("Запускаю бота...")
-
 try:
 app = Application.builder().token(BOT_TOKEN).build()
-
 conv_handler = ConversationHandler(
 entry_points=[CommandHandler("report", report)],
 states={
@@ -142,13 +132,10 @@ FINISH: [MessageHandler(filters.TEXT & filters.Regex("^(готово)$"), finish
 },
 fallbacks=[CommandHandler("cancel", cancel)]
 )
-
 app.add_handler(CommandHandler("start", start))
 app.add_handler(conv_handler)
-
 print("Бот запущен!")
 app.run_polling()
-
 except Exception as e:
 print(f"Ошибка: {e}")
 
