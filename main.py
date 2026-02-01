@@ -1,13 +1,28 @@
+import os
 import logging
 import requests
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ConversationHandler, filters, ContextTypes
-from config import BOT_TOKEN, WEBHOOK_URL, QUESTIONS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, PHOTO, FINISH = range(11)
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8446705525:AAH8evf1zy3QXKj-fJh2cc_KdM-OA2rFaBw")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://script.google.com/macros/s/AKfycbwdxFdnC_9uEVPdjxkCUSKROYIlQ-AO5nyZPX6wXR-I1OSLiesXBoDHj-nY4rGw9TQqqA/exec")
+
+QUESTIONS = [
+"1. Отчётный период (например: 10-16 марта 2025)",
+"2. Автор отчёта (ФИО)",
+"3. Подразделение",
+"4. Ключевые результаты недели (по пунктам)",
+"5. Что проверено по чек-листу аудита",
+"6. Номера задач в Битрикс24",
+"7. Финансы (куплено/отремонтировано)",
+"8. Пункты KPI, требующие внимания",
+"9. План на следующую неделю"
+]
+
+Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, FINISH = range(10)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 await update.message.reply_text("Привет! Я бот для отчетов. Напиши /report чтобы начать")
