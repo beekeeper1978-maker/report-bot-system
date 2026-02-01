@@ -1,20 +1,4 @@
-await update.message.reply_text("Напиши /report чтобы начать")
-        return
-    
-    data = user_data[user_id]
-    
-    # Проверяем, что мы на этапе фото
-    if data['step'] < len(QUESTIONS):
-        await update.message.reply_text("Сначала ответь на все вопросы выше")
-        return
-    
-    # Получаем фото
-    photo = update.message.photo[-1]
-    data['photos'].append(photo.file_id)
-    data['captions'].append('')  # пустая подпись пока
-    
-    # Просим подпись
-    data['waiting_caption'] = len(data['photos']) - 1
+data['waiting_caption'] = len(data['photos']) - 1
     
     await update.message.reply_text(
         f"📸 Фото {len(data['photos'])} получено!\n"
@@ -26,7 +10,6 @@ async def save_report(update: Update, user_id: int):
     
     await update.message.reply_text("⏳ Сохраняю отчет в Google Таблицу...")
     
-    # Подготовка данных для Google
     report_data = {
         'user_id': str(user_id),
         'timestamp': data['start_time'].isoformat(),
@@ -44,7 +27,6 @@ async def save_report(update: Update, user_id: int):
     }
     
     try:
-        # Отправляем в Google
         response = requests.post(GOOGLE_URL, json=report_data, timeout=10)
         
         if response.status_code == 200:
@@ -68,7 +50,6 @@ async def save_report(update: Update, user_id: int):
             "Проверь интернет и попробуй позже."
         )
     
-    # Удаляем данные пользователя
     if user_id in user_data:
         del user_data[user_id]
 
@@ -79,12 +60,10 @@ def main():
     
     app = Application.builder().token(TOKEN).build()
     
-    # Команды
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("report", report))
     app.add_handler(CommandHandler("cancel", cancel))
     
-    # Сообщения
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     
