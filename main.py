@@ -1,167 +1,152 @@
-import os
 import logging
 import requests
-from datetime import datetime
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-
-TOKEN = "8446705525:AAH8evf1zy3QXKj-fJh2cc_KdM-OA2rFaBw"
-GOOGLE_URL = "https://script.google.com/macros/s/AKfycbw3FYa8iJ-FrDHSnL8vvecHvYr2bZ_sk_W3owJbhuLD756JEsBIMWJO1IxHAuHbh-6JkA/exec"
+from telegram.ext import Application, CommandHandler, MessageHandler, ConversationHandler, filters, ContextTypes
+from config import BOT_TOKEN, WEBHOOK_URL, QUESTIONS
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(name)
 
-QUESTIONS = [
-"1. 📅 Отчётный период (например, 01-07 февраля 2025):",
-"2. 👤 Автор отчёта (ФИО):",
-"3. 🏢 Подразделение:",
-"4. 🎯 Ключевые результаты недели:",
-"5. ✅ Что проверено по чек-листу аудита:",
-"6. 📋 Номера задач в Битрикс24:",
-"7. 💰 Финансы (куплено/отремонтировано):",
-"8. ⚠️ Пункты KPI, требующие внимания:",
-"9. 📈 План на следующую неделю:"
-]
-
-user_data = {}
+Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, PHOTO, FINISH = range(11)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-await update.message.reply_text(
-"📊 Бот для еженедельных отчетов\n\n"
-"Напиши /report чтобы начать новый отчет"
-)
+await update.message.reply_text("Привет! Я бот для отчетов. Напиши /report чтобы начать")
+return ConversationHandler.END
 
 async def report(update: Update, context: ContextTypes.DEFAULT_TYPE):
-user_id = update.effective_user.id
+context.user_data.clear()
+context.user_data["answers"] = []
+context.user_data["photos"] = []
 
-user_data[user_id] = {
-'step': 0,
-'answers': [],
-'start_time': datetime.now()
-}
+await update.message.reply_text(f"{QUESTIONS[0]}\n\n(напиши ответ текстом)")
+return Q1
+
+async def handle_q1(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
+await update.message.reply_text(f"{QUESTIONS[1]}\n\n(напиши ответ текстом)")
+return Q2
+
+async def handle_q2(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
+await update.message.reply_text(f"{QUESTIONS[2]}\n\n(напиши ответ текстом)")
+return Q3
+
+async def handle_q3(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
+await update.message.reply_text(f"{QUESTIONS[3]}\n\n(напиши ответ текстом)")
+return Q4
+
+async def handle_q4(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
+await update.message.reply_text(f"{QUESTIONS[4]}\n\n(напиши ответ текстом)")
+return Q5
+
+async def handle_q5(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
+await update.message.reply_text(f"{QUESTIONS[5]}\n\n(напиши ответ текстом)")
+return Q6
+
+async def handle_q6(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
+await update.message.reply_text(f"{QUESTIONS[6]}\n\n(напиши ответ текстом)")
+return Q7
+
+async def handle_q7(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
+await update.message.reply_text(f"{QUESTIONS[7]}\n\n(напиши ответ текстом)")
+return Q8
+
+async def handle_q8(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
+await update.message.reply_text(f"{QUESTIONS[8]}\n\n(напиши ответ текстом)")
+return Q9
+
+async def handle_q9(update: Update, context: ContextTypes.DEFAULT_TYPE):
+context.user_data["answers"].append(update.message.text)
 
 await update.message.reply_text(
-"📝 НАЧИНАЕМ СОЗДАНИЕ ОТЧЕТА\n\n"
-f"{QUESTIONS[0]}\n\n"
-"Напиши ответ:"
+"✅ Все вопросы пройдены!\n\n"
+"📸 Теперь можно добавить фото (необязательно)\n"
+"Отправь фото или напиши 'готово' чтобы закончить"
 )
-
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-user_id = update.effective_user.id
-text = update.message.text.strip()
-
-if text.startswith('/'):
-return
-
-if user_id not in user_data:
-return
-
-data = user_data[user_id]
-
-if data['step'] < len(QUESTIONS):
-data['answers'].append(text)
-data['step'] += 1
-
-if data['step'] < len(QUESTIONS):
-await update.message.reply_text(
-f"✅ Ответ сохранен!\n\n"
-f"{QUESTIONS[data['step']]}\n\n"
-"Напиши ответ:"
-)
-else:
-await update.message.reply_text(
-"🎉 ВСЕ ВОПРОСЫ ПРОЙДЕНЫ!\n\n"
-"Теперь отправь фото (если нужно) или напиши 'готово' чтобы сохранить отчет.\n\n"
-"📸 Можно отправить до 6 фото\n"
-"🏷️ После каждого фото напиши подпись\n"
-"✅ Напиши 'готово' для сохранения"
-)
+return PHOTO
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-user_id = update.effective_user.id
+if update.message.photo:
+photo = update.message.photo[-1]
+context.user_data["photos"].append(photo.file_id)
+await update.message.reply_text(f"✅ Фото сохранено. Можно добавить еще фото или написать 'готово'")
+return PHOTO
 
-if user_id not in user_data:
-await update.message.reply_text("Сначала начни отчет /report")
-return
-
-data = user_data[user_id]
-
-if data['step'] < len(QUESTIONS):
-await update.message.reply_text("Сначала ответь на все вопросы")
-return
-
-await update.message.reply_text(
-"📸 Фото получено!\n"
-"Напиши подпись к этому фото:"
-)
-
-async def finish_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
-user_id = update.effective_user.id
-text = update.message.text.strip().lower()
-
-if text != 'готово':
-return
-
-if user_id not in user_data:
-await update.message.reply_text("Сначала начни отчет /report")
-return
-
-data = user_data[user_id]
-
-if data['step'] < len(QUESTIONS):
-await update.message.reply_text("Сначала ответь на все вопросы")
-return
-
-await update.message.reply_text("⏳ Сохраняю отчет в Google Таблицу...")
-
-report_data = {
-'user_id': str(user_id),
-'timestamp': data['start_time'].isoformat(),
-'period': data['answers'][0] if len(data['answers']) > 0 else '',
-'author': data['answers'][1] if len(data['answers']) > 1 else '',
-'department': data['answers'][2] if len(data['answers']) > 2 else '',
-'key_results': data['answers'][3] if len(data['answers']) > 3 else '',
-'audit': data['answers'][4] if len(data['answers']) > 4 else '',
-'bitrix': data['answers'][5] if len(data['answers']) > 5 else '',
-'finances': data['answers'][6] if len(data['answers']) > 6 else '',
-'kpi': data['answers'][7] if len(data['answers']) > 7 else '',
-'plan': data['answers'][8] if len(data['answers']) > 8 else ''
-}
+async def finish(update: Update, context: ContextTypes.DEFAULT_TYPE):
+user_data = context.user_data
 
 try:
-response = requests.post(GOOGLE_URL, json=report_data, timeout=10)
+data = {
+"period": user_data["answers"][0] if len(user_data["answers"]) > 0 else "",
+"author": user_data["answers"][1] if len(user_data["answers"]) > 1 else "",
+"department": user_data["answers"][2] if len(user_data["answers"]) > 2 else "",
+"results": user_data["answers"][3] if len(user_data["answers"]) > 3 else "",
+"problems": user_data["answers"][4] if len(user_data["answers"]) > 4 else "",
+"solved": user_data["answers"][5] if len(user_data["answers"]) > 5 else "",
+"help": user_data["answers"][6] if len(user_data["answers"]) > 6 else "",
+"rating": user_data["answers"][7] if len(user_data["answers"]) > 7 else "",
+"plan": user_data["answers"][8] if len(user_data["answers"]) > 8 else "",
+"photos_count": len(user_data["photos"]),
+"chat_id": update.effective_chat.id
+}
+
+response = requests.post(WEBHOOK_URL, json=data)
 
 if response.status_code == 200:
-await update.message.reply_text(
-"✅ ОТЧЕТ УСПЕШНО СОХРАНЕН!\n\n"
-"Все данные записаны в Google Таблицу.\n"
-"Скоро получишь презентацию."
-)
+await update.message.reply_text("🎉 Отчет отправлен в Google Таблицу!")
 else:
-await update.message.reply_text(f"⚠️ Ошибка сохранения: {response.status_code}")
+await update.message.reply_text("⚠️ Данные собраны, но ошибка отправки в Google")
 
 except Exception as e:
-logger.error(f"Ошибка: {e}")
-await update.message.reply_text("❌ Ошибка соединения с Google")
+await update.message.reply_text(f"❌ Ошибка: {str(e)}")
 
-if user_id in user_data:
-del user_data[user_id]
+return ConversationHandler.END
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+await update.message.reply_text("Отчет отменен")
+context.user_data.clear()
+return ConversationHandler.END
 
 def main():
-print("=" * 50)
-print("🤖 БОТ ДЛЯ ОТЧЕТОВ ЗАПУЩЕН")
-print("=" * 50)
+print("Запускаю бота...")
 
-app = Application.builder().token(TOKEN).build()
+try:
+app = Application.builder().token(BOT_TOKEN).build()
+
+conv_handler = ConversationHandler(
+entry_points=[CommandHandler("report", report)],
+states={
+Q1: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q1)],
+Q2: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q2)],
+Q3: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q3)],
+Q4: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q4)],
+Q5: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q5)],
+Q6: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q6)],
+Q7: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q7)],
+Q8: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q8)],
+Q9: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_q9)],
+PHOTO: [
+MessageHandler(filters.PHOTO, handle_photo),
+MessageHandler(filters.TEXT & filters.Regex("^(готово|закончить)$"), finish)
+]
+},
+fallbacks=[CommandHandler("cancel", cancel)]
+)
 
 app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("report", report))
+app.add_handler(conv_handler)
 
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
-app.add_handler(MessageHandler(filters.TEXT & filters.Regex('готово'), finish_report))
-
-print("✅ Бот готов к сбору отчетов!")
+print("Бот запущен!")
 app.run_polling()
 
+except Exception as e:
+print(f"Ошибка: {e}")
+
+if name == "main":
 main()
